@@ -1,0 +1,49 @@
+name: Build and Test Writer
+
+# Trigger workflow on push or pull request to main branch
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout repo
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Step 2: Install cross compiler (optional if needed)
+      - name: Install aarch64 cross compiler
+        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
+
+      # Step 3: Build native writer
+      - name: Build writer (native)
+        run: |
+          cd finder-app
+          make clean
+          make
+
+      # Step 4: Run finder-test.sh
+      - name: Run tests
+        run: |
+          cd finder-app
+          chmod +x finder-test.sh
+          chmod +x finder.sh
+          ./finder-test.sh
+
+      # Step 5: Cross-compile writer
+      - name: Build writer (cross-compile)
+        run: |
+          cd finder-app
+          make clean
+          make CROSS_COMPILE=aarch64-linux-gnu-
+
+      # Step 6: Verify cross-compiled binary
+      - name: Check cross-compiled binary
+        run: |
+          cd finder-app
+          file writer > ../assignments/assignment2/fileresult.txt
